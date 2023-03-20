@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>ジャンプで弾を避ける</title>
+    <script src="crafty-min.js"></script>
+    <style type="text/css">
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game"></div>
+    <script>
+        Crafty.init(800, 600, document.getElementById('game'));
+        Crafty.background('#09752f');
+        // エイリアン
+        Crafty.sprite(310, 670, "tatsushi.png", { alien: [0, 0] });
+        Crafty.e('2D, Canvas, alien, Jumper, Gravity ,Twoway')
+            .attr({ x: 150, y: 0, w: 180, h: 220 })
+            .twoway(400)//移動速度
+            .jumper(400, ['UP_ARROW', 'W'])
+            .gravity('Floor')
+            .bind('KeyDown', function (e) { // KeyDown イベントを追加
+                if (e.key === Crafty.keys.RIGHT_ARROW) {
+                    this.vx = 400; // 右へ移動
+                } else if (e.key === Crafty.keys.LEFT_ARROW) {
+                    this.vx = -400; // 左へ移動
+                }
+            })
+            .bind('KeyUp', function (e) { // KeyUp イベントを追加
+                if (e.key === Crafty.keys.RIGHT_ARROW || e.key === Crafty.keys.LEFT_ARROW) {
+                    this.vx = 0; // 移動停止
+                }
+            });
+
+        // 床
+        Crafty.e('Floor, 2D, Canvas, Color')
+            .attr({ x: 200, y: 500, w: 460, h: 10 })
+            .color('#00552e');
+        // 弾
+        Crafty.e('2D, Canvas, Color, Collision')
+            .attr({ x: 800, y: 455, w: 120, h: 400 })
+            .color('red')
+            .checkHits('alien')
+            .bind('EnterFrame', function () {
+                this.x -= 5;
+                if (this.x < -50) {
+                    this.x = 800;
+            }
+        })
+            .bind("HitOn", function () {
+                console.log("hit");
+                Crafty.pause();     // EnterFrame も jumper も止まる
+                Crafty.e('2D, DOM, Text')
+                    .attr({ x: 250, y: 250, w: 400 })
+                    .text("ウェーーイ!").textColor('#ff6633')
+                    .textFont({ size: '40px', weight: 'bold' });
+
+                // 弾を作成する関数
+                function createBullet(x, y) {
+                    Crafty.e('2D, Canvas, Color, Collision')
+                        .attr({ x: x, y: y, w: 20, h: 20 })
+                        .color('green')
+                        .checkHits('alien')
+                        .bind('EnterFrame', function () {
+                            this.x += 5;
+                            if (this.x > 800) {
+                                this.destroy();
+                            }
+                        });
+                }
+
+                // 弾を作成して動かす
+                setInterval(function () {
+                    var bulletY = Math.random() * 500;
+                    createBullet(800, bulletY);
+                }, 1000);
+
+            });
+    </script>
+</body>
+
+</html>
